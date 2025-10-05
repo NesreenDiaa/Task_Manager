@@ -1,0 +1,124 @@
+{
+	"info": {
+		"_postman_id": "0411ef74-5603-47b1-9b7f-fd4b845587cd",
+		"name": "Task Manager",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "48961836",
+		"_collection_link": "https://nesreendiaa-6271208.postman.co/workspace/nesreendiaa's-Workspace~28ada093-6502-4d83-8b8e-6f71caafc638/collection/48961836-0411ef74-5603-47b1-9b7f-fd4b845587cd?action=share&source=collection_link&creator=48961836"
+	},
+	"item": [
+		{
+			"name": "Login",
+			"request": {
+				"method": "GET",
+				"header": []
+			},
+			"response": []
+		},
+		{
+			"name": "Cretae User",
+			"request": {
+				"method": "GET",
+				"header": []
+			},
+			"response": []
+		},
+		{
+			"name": "Get User",
+			"request": {
+				"method": "GET",
+				"header": []
+			},
+			"response": []
+		},
+		{
+			"name": "Get Tasks",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJOZXNyZWVuIERpYWEiLCJpYXQiOjE3NTk2ODU0MDYsImV4cCI6MTc1OTcyMTQwNn0.DU2VeHrzSXRS2VoMN_Iyx3AsAR2IXtdFcmHG872Hus4",
+							"type": "string"
+						}
+					]
+				},
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:8080/api/tasks?assignedID=2",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8080",
+					"path": [
+						"api",
+						"tasks"
+					],
+					"query": [
+						{
+							"key": "status",
+							"value": "OPEN",
+							"disabled": true
+						},
+						{
+							"key": "assignedID",
+							"value": "2"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Get Task by id",
+			"request": {
+				"method": "GET",
+				"header": []
+			},
+			"response": []
+		},
+		{
+			"name": "Create Task",
+			"request": {
+				"method": "GET",
+				"header": []
+			},
+			"response": []
+		},
+		{
+			"name": "Update Task",
+			"request": {
+				"method": "GET",
+				"header": []
+			},
+			"response": []
+		},
+		{
+			"name": "Update Task status",
+			"request": {
+				"method": "GET",
+				"header": []
+			},
+			"response": []
+		},
+		{
+			"name": "Update Due Date",
+			"request": {
+				"method": "GET",
+				"header": []
+			},
+			"response": []
+		},
+		{
+			"name": "Delete Task by id",
+			"request": {
+				"method": "GET",
+				"header": []
+			},
+			"response": []
+		}
+	]
+}
