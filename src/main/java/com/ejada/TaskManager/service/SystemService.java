@@ -3,10 +3,7 @@ package com.ejada.TaskManager.service;
 
 import com.ejada.TaskManager.Dto.TaskDto;
 import com.ejada.TaskManager.Dto.UserDto;
-import com.ejada.TaskManager.entity.Role;
-import com.ejada.TaskManager.entity.Status;
-import com.ejada.TaskManager.entity.Task;
-import com.ejada.TaskManager.entity.User;
+import com.ejada.TaskManager.entity.*;
 import com.ejada.TaskManager.exception.InvalidOperationException;
 import com.ejada.TaskManager.exception.ResourceNotFoundException;
 import com.ejada.TaskManager.mappers.TaskMapper;
@@ -38,6 +35,7 @@ public class SystemService {
     private final AuthenticationManager manager;
     private final JWTService jwtService;
 
+    @PreAuthorize("hasRole('ADMIN')")
     public UserDto findUserById(int id) {
         return userMapper.toDto(userRepo.findById(id).orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + id)));
     }
@@ -52,6 +50,7 @@ public class SystemService {
         return jwtService.generateToken(userDto.getUsername());
     }
 
+    @PreAuthorize("hasRole('ADMIN')")
     public UserDto createUser(UserDto userDto) {
         if (userRepo.existsByEmail(userDto.getEmail())) {
             throw new InvalidOperationException("This user already exists!");
@@ -70,33 +69,49 @@ public class SystemService {
         return userMapper.toDto(userRepo.save(user));
     }
 
-    public TaskDto findTaskById(int id) {
-        TaskDto task = taskMapper.toDto(taskRepo.findTaskById(id).orElseThrow(() -> new ResourceNotFoundException("Task not found with id: " + id)));
-
-        if(task.getAssignedToUser() == null) {
-            task.setAssignedToID(task.getCreatedByID());
-            task.setAssignedToUser(task.getCreatedByUser());
+    @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
+    public TaskDto findTaskById(int id, MyUserDetails currentUser) {
+        TaskDto taskDto;
+        Task task = taskRepo.findTaskById(id).orElseThrow(() -> new ResourceNotFoundException("Task not found with id: " + id));
+        boolean isAdmin = currentUser.getAuthorities().stream().anyMatch(auth -> auth.getAuthority().equals("ROLE_ADMIN"));
+        if(isAdmin) {
+            taskDto = taskMapper.toDto(task);
+        } else {
+            int userID = currentUser.getId();
+            if(task.getAssignedTo().getId() == userID) {
+                taskDto = taskMapper.toDto(task);
+            } else {
+                throw new InvalidOperationException("Unauthorized user to get this task!");
+            }
         }
 
-        return task;
+        return taskDto;
     }
 
-    public List<TaskDto> findTasks(Status status, Integer assignee) {
-        List<Task> tasks;
+    @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
+    public List<TaskDto> findTasks(Status status, Integer assignee, MyUserDetails currentUser) {
+        List<Task> tasks = new ArrayList<>();
         List<TaskDto> taskDtos = new ArrayList<>();
 
-        if (status == null && assignee == null) {
-            tasks = taskRepo.findAll();
+        boolean isAdmin = currentUser.getAuthorities().stream().anyMatch(auth -> auth.getAuthority().equals("ROLE_ADMIN"));
+
+        if(isAdmin) {
+            if (status == null && assignee == null) {
+                tasks = taskRepo.findAll();
+            } else {
+                tasks = taskRepo.findByStatusOrAssignee(status, assignee);
+            }
         } else {
-            tasks = taskRepo.findByStatusOrAssignee(status, assignee);
+            int userID = currentUser.getId();
+            if (status == null) {
+                tasks = taskRepo.findByStatusOrAssignee(status, userID);
+            } else {
+                tasks = taskRepo.findByStatusOrAssignee(status, userID);
+            }
         }
 
         for(Task task:tasks) {
             TaskDto taskDto = taskMapper.toDto(task);
-//            if(taskDto.getAssignedToUser() == null) {
-//                taskDto.setAssignedToID(taskDto.getCreatedByID());
-//                taskDto.setAssignedToUser(taskDto.getCreatedByUser());
-//            }
             taskDtos.add(taskDto);
         }
 
@@ -144,12 +159,14 @@ public class SystemService {
     @PreAuthorize("hasRole('ADMIN') or @taskSecurity.isOwner(#id, authentication)")
     public TaskDto updateTaskQuery(int id, TaskDto updatedTask) {
         int assigneeId = updatedTask.getAssignedToID();
+        Task tempTask = taskRepo.findTaskById(id).orElseThrow(() -> new ResourceNotFoundException("Task lost after updating"));
+
         if (assigneeId == 0) {
             throw new ResourceNotFoundException("assignedToID is required");
         }
         int updates = taskRepo.updateTaskQuery(
                 id, updatedTask.getTitle(), updatedTask.getDescription(),
-                updatedTask.getAssignedToID()
+                assigneeId
         );
 
         if(updates == 0) {
@@ -159,7 +176,8 @@ public class SystemService {
 
         User creator = task.getCreatedBy();
         if(creator.getRole().getName().equals("USER")) {
-            throw new InvalidOperationException("You aren't allowed to assign tasks to another user");
+            if(tempTask.getAssignedTo().getId() != assigneeId)
+                throw new InvalidOperationException("You aren't allowed to assign tasks to another user");
         }
 
         return taskMapper.toDto(task);

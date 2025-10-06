@@ -2,11 +2,13 @@ package com.ejada.TaskManager.controller;
 
 import com.ejada.TaskManager.Dto.TaskDto;
 import com.ejada.TaskManager.Dto.UserDto;
+import com.ejada.TaskManager.entity.MyUserDetails;
 import com.ejada.TaskManager.entity.Status;
 import com.ejada.TaskManager.service.SystemService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
@@ -27,7 +29,8 @@ public class MyRestController {
     }
 
     @PostMapping("/auth/register")
-    public ResponseEntity<UserDto> registerUser(@Valid @RequestBody UserDto userDto) {
+    public ResponseEntity<UserDto> registerUser(@Valid @RequestBody UserDto userDto,
+                                                @AuthenticationPrincipal MyUserDetails currentUser) {
         return ResponseEntity.ok(systemService.createUser(userDto));
     }
 
@@ -39,19 +42,22 @@ public class MyRestController {
 
     // GET /api/users/{id} - Get user
     @GetMapping("/users/{id}")
-    public ResponseEntity<UserDto> getUser(@PathVariable int id) {
+    public ResponseEntity<UserDto> getUser(@PathVariable int id,
+                                           @AuthenticationPrincipal MyUserDetails currentUser) {
         return ResponseEntity.ok(systemService.findUserById(id));
     }
 
     @GetMapping("/tasks/{id}")
-    public ResponseEntity<TaskDto> getTask(@PathVariable int id) {
-        return ResponseEntity.ok(systemService.findTaskById(id));
+    public ResponseEntity<TaskDto> getTask(@PathVariable int id,
+                                           @AuthenticationPrincipal MyUserDetails currentUser) {
+        return ResponseEntity.ok(systemService.findTaskById(id, currentUser));
     }
 
     @GetMapping("/tasks")
     public ResponseEntity<List<TaskDto>> getAllTasks(@RequestParam(name = "status", required = false) Status status,
-                                                     @RequestParam(name = "assigneeID", required = false) Integer assigneeId) {
-        return ResponseEntity.ok(systemService.findTasks(status, assigneeId));
+                                                     @RequestParam(name = "assigneeID", required = false) Integer assigneeId,
+                                                     @AuthenticationPrincipal MyUserDetails currentUser) {
+        return ResponseEntity.ok(systemService.findTasks(status, assigneeId, currentUser));
     }
 
     @PutMapping("/tasks/{id}")

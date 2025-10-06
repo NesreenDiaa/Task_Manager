@@ -29,6 +29,20 @@ public interface TaskRepo extends JpaRepository<Task, Integer> {
             @Param("assigneeId") Integer assignee
     );
 
+//    @Query("SELECT t FROM Task t"+
+//            " WHERE (:status IS NULL OR t.status = :status)"+
+//            " AND (:assigneeId IS NULL OR t.assignedTo.id = :assigneeId)"
+//    )
+//    List<Task> findByStatusOrAssignee(
+//            @Param("status") Status status,
+//            @Param("assigneeId") Integer assignee
+//    );
+
+//    @Query("SELECT t FROM Task t"+
+//            " WHERE t.assignedTo.id = :assigneeId"
+//    )
+//    List<Task> findByAssigneeId(@Param("assigneeId") int userId);
+
     @Modifying
     @Transactional
     @Query("UPDATE Task t SET t.title = :title, t.description = :description, t.assignedTo.id = :assigneeId WHERE t.id = :id")
