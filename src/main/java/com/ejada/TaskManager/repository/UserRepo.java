@@ -11,11 +11,6 @@ import java.util.Optional;
 @Repository
 public interface UserRepo extends JpaRepository<User, Integer> {
 
-
-
-//    @Query("SELECT u FROM User u LEFT JOIN FETCH u.tasks WHERE u.id = :id")
-//    Optional<User> findUserById(@Param("id") int id);
-
     Optional<User> findByUsername(String username);
     boolean existsByEmail(String email);
 

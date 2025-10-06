@@ -159,26 +159,26 @@ public class SystemService {
     @PreAuthorize("hasRole('ADMIN') or @taskSecurity.isOwner(#id, authentication)")
     public TaskDto updateTaskQuery(int id, TaskDto updatedTask) {
         int assigneeId = updatedTask.getAssignedToID();
-        Task tempTask = taskRepo.findTaskById(id).orElseThrow(() -> new ResourceNotFoundException("Task lost after updating"));
-
         if (assigneeId == 0) {
-            throw new ResourceNotFoundException("assignedToID is required");
+            throw new InvalidOperationException("assignedToID is required");
         }
+
+        Task oldTask = taskRepo.findTaskById(id).orElseThrow(() -> new ResourceNotFoundException("Task not found with id: "+id));
+        User creator = oldTask.getCreatedBy();
+        if(creator.getRole().getName().equals("USER")) {
+            if(oldTask.getAssignedTo().getId() != assigneeId)
+                throw new InvalidOperationException("You aren't allowed to assign tasks to another user");
+        }
+
         int updates = taskRepo.updateTaskQuery(
                 id, updatedTask.getTitle(), updatedTask.getDescription(),
                 assigneeId
         );
 
         if(updates == 0) {
-            throw new InvalidOperationException("Failed Updating Task id "+id+" not found!!");
+            throw new InvalidOperationException("Failed Updating Task id "+id+"!");
         }
         Task task = taskRepo.findTaskById(id).orElseThrow(() -> new ResourceNotFoundException("Task lost after updating"));
-
-        User creator = task.getCreatedBy();
-        if(creator.getRole().getName().equals("USER")) {
-            if(tempTask.getAssignedTo().getId() != assigneeId)
-                throw new InvalidOperationException("You aren't allowed to assign tasks to another user");
-        }
 
         return taskMapper.toDto(task);
     }
